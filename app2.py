@@ -13,6 +13,7 @@ def load_data():
                 inplace=True)
     df = df.sort_values(by='Year', ascending=True)
     df.reset_index(drop=True, inplace=True)
+    df.Aircraft = df.Aircraft.str.replace("?","")
     return df
 # load the data set
 df = load_data()
@@ -20,6 +21,9 @@ df = load_data()
 # Total Deaths Analysis
 df['Total_deaths'] = df['Fatalities'] + df['Ground']
 Total_deaths=df['Total_deaths']
+# Calculating Number of survivors
+df['Survivor'] = df['Aboard'] - df['Fatalities']
+No_of_Survivors = df['Survivor']
 # Fatality rate Analysis
 df['Fatality Rate'] = df['Fatalities'] / df['Aboard']
 Fatality_Rate = df['Fatality Rate']
@@ -44,11 +48,12 @@ selected_year = st.sidebar.multiselect(
                     ])
 filtered_table = df[df['Year'].isin(selected_year)]
 
+
 # Total Fatality
 if len (filtered_table) > 0:
     Total_fatalities = filtered_table['Fatalities'].sum()
 else:
-    Total_fatalities = df.Fatalities.sum()
+    Total_fatalities = df.Fatalities.sum()  
 
 # Total deaths
 if len (filtered_table) > 0:
@@ -62,27 +67,32 @@ if len (filtered_table) > 0:
 else:
     Fatality_Rate = df['Fatality Rate'].count()
 
+# Survivor Analysis
+if len (filtered_table) > 0:
+    No_of_Survivors = filtered_table['Survivor'].sum()
+else:
+    No_of_Survivors = df['Survivor'].sum()
 
 # Display of metrics
-st.subheader("Calculations")
-col1, col2, col3 = st.columns([2,2,2], gap="large")
+st.subheader("Summary")
+col1, col2, col3 = st.columns([0.5,0.5,0.5], gap="small")
 col1.metric(
-    label = "Total Fatalities",
-    value = f"{Total_fatalities:,}")
-col2.metric(
     label = "Total Deaths",
     value = f"{Total_deaths:,}")
-col3.metric(
+col2.metric(
     label = "Fatality Rate",
     value = f"{Fatality_Rate:,}")
+col3.metric(
+    label = "No. of Survivors",
+    value = f"{No_of_Survivors:,}")
 # end of metrics
 
-# Display the dataframe
+# Display specific columns in dataframe
 st.dataframe(filtered_table [["Year","Month","Country","Aircraft","Fatalities","Ground",
                       "Aboard","Total_deaths","Fatality Rate"]], width = 700, height = 300)
 
 # Crash analysis per year
-Crash_per_year = filtered_table.groupby('Year').size()
+Crash_per_year = filtered_table.groupby('Year').size().sort_values(ascending=True)
 try:
     st.write("# Crashes per year")
     st.bar_chart(Crash_per_year,
@@ -112,7 +122,7 @@ Fatalities_per_year = filtered_table.groupby('Year')['Fatalities'].sum().sort_va
 try:
     st.write("# Total Fatalities in Air crashes per year")
     st.bar_chart(Fatalities_per_year,
-                 color="#ffaa00")
+                 color="#ffaa0088")
     xlabel = "Year"
     ylabel = "No of Fatalities"
 except ValueError as e:
@@ -121,11 +131,11 @@ except ValueError as e:
     )
 
 # Analysis for top 10 aircraft involved in crashes
-Crash_by_aircraft = df['Aircraft'].value_counts().head(10)
+Crash_by_aircraft = df['Aircraft'].value_counts().head(10).sort_values(ascending=True)
 try:
     st.write("# Top 10 Aircraft involved in crashes")
     st.bar_chart(Crash_by_aircraft,
-                 color="#ffaa00")
+                 color="#ffaa0088")
     xlabel = "No of Crashes"
     ylabel = "Aircraft Type"
 except ValueError as e:
@@ -138,7 +148,7 @@ Crash_by_country = df['Country'].value_counts().head(10)
 try:
     st.write("# Top 10 countries involved in crashes")
     st.bar_chart(Crash_by_country,
-                 color="#ffaa00")
+                 color="#ffaa0088")
     xlabel = "Number of crashes"
     ylabel = "Country"
 except ValueError as e:
